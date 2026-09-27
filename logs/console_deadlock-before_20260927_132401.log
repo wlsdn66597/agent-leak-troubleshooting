@@ -1,0 +1,43 @@
+[2026-09-27 13:24:01] >>> Starting Agent Boot Sequence...
+[2026-09-27 13:24:01] [1/6] Checking User Account               [OK]
+[2026-09-27 13:24:01]    ... Running as service user 'jinu' (uid=1000)
+[2026-09-27 13:24:01] [2/6] Verifying Environment Variables     [OK]
+[2026-09-27 13:24:01]    ... All required Envs correct
+[2026-09-27 13:24:01] [3/6] Checking Required Files             [OK]
+[2026-09-27 13:24:01]    ... Verified 'secret.key' with correct key string.
+[2026-09-27 13:24:01] [4/6] Checking Port Availability          [OK]
+[2026-09-27 13:24:01]    ... Port 15034 is available.
+[2026-09-27 13:24:01] [5/6] Verifying Log Permission            [OK]
+[2026-09-27 13:24:01]    ... Log directory is writable: /home/jinu/agent-leak/logs
+[2026-09-27 13:24:01] [6/6] Verifying Mission Environment       [OK]
+[2026-09-27 13:24:01]    ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=50%, MULTI_THREAD_ENABLE=True
+[2026-09-27 13:24:01] ------------------------------------------------------------
+[2026-09-27 13:24:01] All Boot Checks Passed!
+[2026-09-27 13:24:01] Agent READY
+[2026-09-27 13:24:01] 2026-09-27 13:24:01,314 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+[2026-09-27 13:24:01] 2026-09-27 13:24:01,314 [INFO] Agent listening at port 15034
+[2026-09-27 13:24:01] 
+[2026-09-27 13:24:01] ==================================================
+[2026-09-27 13:24:01]  [ Agent Initiate ] Resource Check 
+[2026-09-27 13:24:01] ==================================================
+[2026-09-27 13:24:01]  [ MEMORY ] Limit: 512MB 		[ OK ]
+[2026-09-27 13:24:01]  [ CPU    ] Limit: 50%  		[ OK ]
+[2026-09-27 13:24:01]  [ THREAD ] Concurrency: True 		[ WARNING ]
+[2026-09-27 13:24:01] --------------------------------------------------
+[2026-09-27 13:24:01]  >>> SYSTEM WARNING: POTENTIAL DEADLOCK IN CONCURRENT MODE.
+[2026-09-27 13:24:01] ==================================================
+[2026-09-27 13:24:01] 
+[2026-09-27 13:24:02] [run] tag=deadlock-before PID=17956 MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=true RUN_TIMEOUT=0 log=/home/jinu/agent-leak-troubleshooting/logs/console_deadlock-before_20260927_132401.log
+[2026-09-27 13:24:03] 2026-09-27 13:24:03,324 [WARNING] [AgentWorker] Initializing concurrent transaction processors...
+[2026-09-27 13:24:03] 2026-09-27 13:24:03,325 [WARNING] [System] CAUTION: Strict resource locking is enabled.
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [Worker-Thread-1] Process Started. Attempting to lock [Shared_Memory_A]...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [AgentWorker][Worker-Thread-2] Process Started. Attempting to lock [Socket_Pool_B]...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [AgentWorker] Waiting for worker threads to complete transactions...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,352 [INFO] [AgentWorker][Worker-Thread-1] LOCK ACQUIRED: [Shared_Memory_A]. (Holding...)
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,352 [INFO] [AgentWorker][Worker-Thread-2] LOCK ACQUIRED: [Socket_Pool_B]. (Holding...)
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,353 [INFO] [AgentWorker][Worker-Thread-1] Processing critical data in Memory A...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,353 [INFO] [AgentWorker][Worker-Thread-2] Establishing network connections in Pool B...
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,364 [INFO] [AgentWorker][Worker-Thread-1] Need resource [Socket_Pool_B] to finish job.
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,364 [INFO] [AgentWorker][Worker-Thread-2] Need resource [Shared_Memory_A] to write logs.
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,365 [INFO] [AgentWorker][Worker-Thread-1] WAITING for [Socket_Pool_B]... (Status: BLOCKED)
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,365 [INFO] [AgentWorker][Worker-Thread-2] WAITING for [Shared_Memory_A]... (Status: BLOCKED)

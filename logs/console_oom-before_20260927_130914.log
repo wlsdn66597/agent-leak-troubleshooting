@@ -1,0 +1,47 @@
+[2026-09-27 13:09:14] >>> Starting Agent Boot Sequence...
+[2026-09-27 13:09:14] [1/6] Checking User Account               [OK]
+[2026-09-27 13:09:14]    ... Running as service user 'jinu' (uid=1000)
+[2026-09-27 13:09:14] [2/6] Verifying Environment Variables     [OK]
+[2026-09-27 13:09:14]    ... All required Envs correct
+[2026-09-27 13:09:14] [3/6] Checking Required Files             [OK]
+[2026-09-27 13:09:14]    ... Verified 'secret.key' with correct key string.
+[2026-09-27 13:09:14] [4/6] Checking Port Availability          [OK]
+[2026-09-27 13:09:14]    ... Port 15034 is available.
+[2026-09-27 13:09:14] [5/6] Verifying Log Permission            [OK]
+[2026-09-27 13:09:14]    ... Log directory is writable: /home/jinu/agent-leak/logs
+[2026-09-27 13:09:14] [6/6] Verifying Mission Environment       [OK]
+[2026-09-27 13:09:14]    ... MEMORY_LIMIT=256MB, CPU_MAX_OCCUPY=50%, MULTI_THREAD_ENABLE=False
+[2026-09-27 13:09:14] ------------------------------------------------------------
+[2026-09-27 13:09:14] All Boot Checks Passed!
+[2026-09-27 13:09:14] Agent READY
+[2026-09-27 13:09:14] 2026-09-27 13:09:14,817 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+[2026-09-27 13:09:14] 2026-09-27 13:09:14,819 [INFO] Agent listening at port 15034
+[2026-09-27 13:09:14] 
+[2026-09-27 13:09:14] ==================================================
+[2026-09-27 13:09:14]  [ Agent Initiate ] Resource Check 
+[2026-09-27 13:09:14] ==================================================
+[2026-09-27 13:09:14]  [ MEMORY ] Limit: 256MB 		[ WARNING: Recommend Over 256MB ]
+[2026-09-27 13:09:14]  [ CPU    ] Limit: 50%  		[ OK ]
+[2026-09-27 13:09:14]  [ THREAD ] Concurrency: False 		[ OK ]
+[2026-09-27 13:09:14] --------------------------------------------------
+[2026-09-27 13:09:14]  >>> SYSTEM STATUS: STABLE. STARTING WORKLOAD MONITORING...
+[2026-09-27 13:09:14] ==================================================
+[2026-09-27 13:09:14] 
+[2026-09-27 13:09:15] [run] tag=oom-before PID=6768 MEMORY_LIMIT=256 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=false RUN_TIMEOUT=0 log=/home/jinu/agent-leak-troubleshooting/logs/console_oom-before_20260927_130914.log
+[2026-09-27 13:09:16] 2026-09-27 13:09:16,864 [INFO] [MemoryWorker] Current Heap: 25MB
+[2026-09-27 13:09:19] 2026-09-27 13:09:19,902 [INFO] [MemoryWorker] Current Heap: 50MB
+[2026-09-27 13:09:22] 2026-09-27 13:09:22,943 [INFO] [MemoryWorker] Current Heap: 75MB
+[2026-09-27 13:09:25] 2026-09-27 13:09:25,992 [INFO] [MemoryWorker] Current Heap: 100MB
+[2026-09-27 13:09:29] 2026-09-27 13:09:29,036 [INFO] [MemoryWorker] Current Heap: 125MB
+[2026-09-27 13:09:32] 2026-09-27 13:09:32,074 [INFO] [MemoryWorker] Current Heap: 150MB
+[2026-09-27 13:09:35] 2026-09-27 13:09:35,114 [INFO] [MemoryWorker] Current Heap: 175MB
+[2026-09-27 13:09:38] 2026-09-27 13:09:38,161 [INFO] [MemoryWorker] Current Heap: 200MB
+[2026-09-27 13:09:41] 2026-09-27 13:09:41,199 [INFO] [MemoryWorker] Current Heap: 225MB
+[2026-09-27 13:09:44] 2026-09-27 13:09:44,239 [INFO] [MemoryWorker] Current Heap: 250MB
+[2026-09-27 13:09:47] 2026-09-27 13:09:47,281 [INFO] [MemoryWorker] Current Heap: 275MB
+[2026-09-27 13:09:47] 2026-09-27 13:09:47,281 [CRITICAL] [MemoryGuard] Memory limit exceeded (275MB >= 256MB) / (Recommend Over 256MB)
+[2026-09-27 13:09:47] 2026-09-27 13:09:47,281 [CRITICAL] [MemoryGuard] Self-terminating process 6768 to prevent system instability.
+[2026-09-27 13:09:47] 
+[2026-09-27 13:09:47] 
+[2026-09-27 13:09:47] >>> [SYSTEM] SELF-TERMINATED (Memory Limit Exceeded) <<<
+[2026-09-27 13:09:47] 

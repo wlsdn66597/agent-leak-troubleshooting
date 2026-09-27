@@ -1,0 +1,45 @@
+[2026-09-27 13:17:22] >>> Starting Agent Boot Sequence...
+[2026-09-27 13:17:22] [1/6] Checking User Account               [OK]
+[2026-09-27 13:17:22]    ... Running as service user 'jinu' (uid=1000)
+[2026-09-27 13:17:22] [2/6] Verifying Environment Variables     [OK]
+[2026-09-27 13:17:22]    ... All required Envs correct
+[2026-09-27 13:17:22] [3/6] Checking Required Files             [OK]
+[2026-09-27 13:17:22]    ... Verified 'secret.key' with correct key string.
+[2026-09-27 13:17:22] [4/6] Checking Port Availability          [OK]
+[2026-09-27 13:17:22]    ... Port 15034 is available.
+[2026-09-27 13:17:22] [5/6] Verifying Log Permission            [OK]
+[2026-09-27 13:17:22]    ... Log directory is writable: /home/jinu/agent-leak/logs
+[2026-09-27 13:17:22] [6/6] Verifying Mission Environment       [OK]
+[2026-09-27 13:17:22]    ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=100%, MULTI_THREAD_ENABLE=False
+[2026-09-27 13:17:22] ------------------------------------------------------------
+[2026-09-27 13:17:22] All Boot Checks Passed!
+[2026-09-27 13:17:22] Agent READY
+[2026-09-27 13:17:22] 2026-09-27 13:17:22,582 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+[2026-09-27 13:17:22] 2026-09-27 13:17:22,583 [INFO] Agent listening at port 15034
+[2026-09-27 13:17:22] 
+[2026-09-27 13:17:22] ==================================================
+[2026-09-27 13:17:22]  [ Agent Initiate ] Resource Check 
+[2026-09-27 13:17:22] ==================================================
+[2026-09-27 13:17:22]  [ MEMORY ] Limit: 512MB 		[ OK ]
+[2026-09-27 13:17:22]  [ CPU    ] Limit: 100%  		[ WARNING: Recommend Under 50% ]
+[2026-09-27 13:17:22]  [ THREAD ] Concurrency: False 		[ OK ]
+[2026-09-27 13:17:22] --------------------------------------------------
+[2026-09-27 13:17:22]  >>> SYSTEM STATUS: STABLE. STARTING WORKLOAD MONITORING...
+[2026-09-27 13:17:22] ==================================================
+[2026-09-27 13:17:22] 
+[2026-09-27 13:17:23] [run] tag=cpu-before PID=12401 MEMORY_LIMIT=512 CPU_MAX_OCCUPY=100 MULTI_THREAD_ENABLE=false RUN_TIMEOUT=0 log=/home/jinu/agent-leak-troubleshooting/logs/console_cpu-before_20260927_131722.log
+[2026-09-27 13:17:24] 2026-09-27 13:17:24,593 [INFO] [CpuWorker] Started. Maximum CPU Limit: 100%
+[2026-09-27 13:17:24] 2026-09-27 13:17:24,594 [INFO] [CpuWorker] Current Load: 5.00%
+[2026-09-27 13:17:27] 2026-09-27 13:17:27,710 [INFO] [CpuWorker] Current Load: 12.52%
+[2026-09-27 13:17:30] 2026-09-27 13:17:30,827 [INFO] [CpuWorker] Current Load: 13.61%
+[2026-09-27 13:17:33] 2026-09-27 13:17:33,944 [INFO] [CpuWorker] Current Load: 19.15%
+[2026-09-27 13:17:37] 2026-09-27 13:17:37,060 [INFO] [CpuWorker] Current Load: 23.29%
+[2026-09-27 13:17:40] 2026-09-27 13:17:40,177 [INFO] [CpuWorker] Current Load: 29.84%
+[2026-09-27 13:17:43] 2026-09-27 13:17:43,294 [INFO] [CpuWorker] Current Load: 31.40%
+[2026-09-27 13:17:46] 2026-09-27 13:17:46,411 [INFO] [CpuWorker] Current Load: 36.23%
+[2026-09-27 13:17:49] 2026-09-27 13:17:49,528 [INFO] [CpuWorker] Current Load: 40.68%
+[2026-09-27 13:17:52] 2026-09-27 13:17:52,645 [INFO] [CpuWorker] Current Load: 50.44%
+[2026-09-27 13:17:52] 2026-09-27 13:17:52,746 [CRITICAL] [CpuWorker] CPU Threshold Violated! (50.44%).
+[2026-09-27 13:17:52] 
+[2026-09-27 13:17:52] >>> [SYSTEM] WATCHDOG: INITIATING EMERGENCY ABORT (SIGTERM) <<<
+[2026-09-27 13:17:52] 

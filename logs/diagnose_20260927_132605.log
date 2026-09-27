@@ -1,0 +1,63 @@
+
+===== [2026-09-27 13:26:05] 1. 프로세스 생존 확인 (ps -ef) =====
+jinu       17953   17950  0 13:24 pts/1    00:00:00 script -qfec /home/jinu/agent-leak/agent-leak-app  /dev/null
+jinu       17955   17953  0 13:24 pts/4    00:00:00 /home/jinu/agent-leak/agent-leak-app
+jinu       17956   17955  0 13:24 pts/4    00:00:00 /home/jinu/agent-leak/agent-leak-app
+
+===== [2026-09-27 13:26:05] 2. T0 스냅샷 - 스레드별 상태 (ps -L) =====
+    PID     LWP STAT %CPU   RSS WCHAN                                TIME COMMAND
+  17956   17956 SNl+  0.0 17792 futex_wait_queue                 00:00:00 agent-leak-app
+  17956   18082 SNl+  0.0 17792 futex_wait_queue                 00:00:00 agent-leak-app
+  17956   18083 SNl+  0.0 17792 futex_wait_queue                 00:00:00 agent-leak-app
+cpu_ticks=6 rss=17792KB
+... 10초 동안 변화를 관찰합니다 ...
+
+===== [2026-09-27 13:26:15] 3. T1 스냅샷 - 스레드별 상태 (ps -L / top -H) =====
+    PID     LWP STAT %CPU   RSS WCHAN                                TIME COMMAND
+  17956   17956 SNl+  0.0 17792 futex_wait_queue                 00:00:00 agent-leak-app
+  17956   18082 SNl+  0.0 17792 futex_wait_queue                 00:00:00 agent-leak-app
+  17956   18083 SNl+  0.0 17792 futex_wait_queue                 00:00:00 agent-leak-app
+top - 13:26:16 up  1:47,  1 user,  load average: 0.04, 0.05, 0.01
+Threads:   3 total,   0 running,   3 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+MiB Mem :   3772.2 total,   3034.7 free,    448.3 used,    289.2 buff/cache
+MiB Swap:   1024.0 total,   1024.0 free,      0.0 used.   3248.9 avail Mem 
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+  17956 jinu      30  10  170624  17792   9600 S   0.0   0.5   0:00.06 agent-l+
+  18082 jinu      30  10  170624  17792   9600 S   0.0   0.5   0:00.00 agent-l+
+  18083 jinu      30  10  170624  17792   9600 S   0.0   0.5   0:00.00 agent-l+
+cpu_ticks=6 rss=17792KB
+
+===== [2026-09-27 13:26:16] 4. 실행 로그 마지막 기록 (/home/jinu/agent-leak-troubleshooting/logs/console_deadlock-before_20260927_132401.log) =====
+파일 최종 수정: 2026-09-27 13:24:10
+[2026-09-27 13:24:01] 
+[2026-09-27 13:24:02] [run] tag=deadlock-before PID=17956 MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=true RUN_TIMEOUT=0 log=/home/jinu/agent-leak-troubleshooting/logs/console_deadlock-before_20260927_132401.log
+[2026-09-27 13:24:03] 2026-09-27 13:24:03,324 [WARNING] [AgentWorker] Initializing concurrent transaction processors...
+[2026-09-27 13:24:03] 2026-09-27 13:24:03,325 [WARNING] [System] CAUTION: Strict resource locking is enabled.
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [Worker-Thread-1] Process Started. Attempting to lock [Shared_Memory_A]...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [AgentWorker][Worker-Thread-2] Process Started. Attempting to lock [Socket_Pool_B]...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [AgentWorker] Waiting for worker threads to complete transactions...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,352 [INFO] [AgentWorker][Worker-Thread-1] LOCK ACQUIRED: [Shared_Memory_A]. (Holding...)
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,352 [INFO] [AgentWorker][Worker-Thread-2] LOCK ACQUIRED: [Socket_Pool_B]. (Holding...)
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,353 [INFO] [AgentWorker][Worker-Thread-1] Processing critical data in Memory A...
+[2026-09-27 13:24:08] 2026-09-27 13:24:08,353 [INFO] [AgentWorker][Worker-Thread-2] Establishing network connections in Pool B...
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,364 [INFO] [AgentWorker][Worker-Thread-1] Need resource [Socket_Pool_B] to finish job.
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,364 [INFO] [AgentWorker][Worker-Thread-2] Need resource [Shared_Memory_A] to write logs.
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,365 [INFO] [AgentWorker][Worker-Thread-1] WAITING for [Socket_Pool_B]... (Status: BLOCKED)
+[2026-09-27 13:24:10] 2026-09-27 13:24:10,365 [INFO] [AgentWorker][Worker-Thread-2] WAITING for [Shared_Memory_A]... (Status: BLOCKED)
+--- 락/대기 관련 로그 (최근 20줄) ---
+27:[2026-09-27 13:24:01]  >>> SYSTEM WARNING: POTENTIAL DEADLOCK IN CONCURRENT MODE.
+30:[2026-09-27 13:24:02] [run] tag=deadlock-before PID=17956 MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=true RUN_TIMEOUT=0 log=/home/jinu/agent-leak-troubleshooting/logs/console_deadlock-before_20260927_132401.log
+32:[2026-09-27 13:24:03] 2026-09-27 13:24:03,325 [WARNING] [System] CAUTION: Strict resource locking is enabled.
+33:[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [Worker-Thread-1] Process Started. Attempting to lock [Shared_Memory_A]...
+34:[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [AgentWorker][Worker-Thread-2] Process Started. Attempting to lock [Socket_Pool_B]...
+35:[2026-09-27 13:24:08] 2026-09-27 13:24:08,351 [INFO] [AgentWorker] Waiting for worker threads to complete transactions...
+36:[2026-09-27 13:24:08] 2026-09-27 13:24:08,352 [INFO] [AgentWorker][Worker-Thread-1] LOCK ACQUIRED: [Shared_Memory_A]. (Holding...)
+37:[2026-09-27 13:24:08] 2026-09-27 13:24:08,352 [INFO] [AgentWorker][Worker-Thread-2] LOCK ACQUIRED: [Socket_Pool_B]. (Holding...)
+42:[2026-09-27 13:24:10] 2026-09-27 13:24:10,365 [INFO] [AgentWorker][Worker-Thread-1] WAITING for [Socket_Pool_B]... (Status: BLOCKED)
+43:[2026-09-27 13:24:10] 2026-09-27 13:24:10,365 [INFO] [AgentWorker][Worker-Thread-2] WAITING for [Shared_Memory_A]... (Status: BLOCKED)
+
+===== [2026-09-27 13:26:16] 5. 판정 =====
+PID:17956  관찰 10s 동안 CPU tick 변화:0  RSS 변화:0KB  마지막 로그 이후:126s
+VERDICT: HANG - PID 는 살아있으나 CPU 사용·로그 기록이 모두 정지 → 스레드가 락 대기(Sleep) 중인 Deadlock 의심
+         (위 ps -L 의 STAT=S, WCHAN=futex_* 는 스레드가 락(futex)을 기다리며 잠들어 있다는 뜻)

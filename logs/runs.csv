@@ -1,0 +1,7 @@
+tag,start,end,survival_sec,exit_code,result,last_keyword,MEMORY_LIMIT,CPU_MAX_OCCUPY,MULTI_THREAD_ENABLE,pid,console_log
+oom-before,2026-09-27 13:09:14,2026-09-27 13:09:47,33,137(SIGKILL),EXITED,SELF-TERMINATED,256,50,false,6768,/home/jinu/agent-leak-troubleshooting/logs/console_oom-before_20260927_130914.log
+oom-after,2026-09-27 13:11:13,2026-09-27 13:16:14,301,143(SIGTERM),SURVIVED,,512,50,false,7576,/home/jinu/agent-leak-troubleshooting/logs/console_oom-after_20260927_131113.log
+cpu-before,2026-09-27 13:17:22,2026-09-27 13:17:52,30,143(SIGTERM),EXITED,WATCHDOG,512,100,false,12401,/home/jinu/agent-leak-troubleshooting/logs/console_cpu-before_20260927_131722.log
+cpu-after,2026-09-27 13:18:17,2026-09-27 13:23:18,301,143(SIGTERM),SURVIVED,,512,50,false,12985,/home/jinu/agent-leak-troubleshooting/logs/console_cpu-after_20260927_131817.log
+deadlock-before,2026-09-27 13:24:01,2026-09-27 13:27:06,185,?,STOPPED_BY_USER,BLOCKED,512,50,true,17956,/home/jinu/agent-leak-troubleshooting/logs/console_deadlock-before_20260927_132401.log
+deadlock-after,2026-09-27 13:27:17,2026-09-27 13:32:18,301,143(SIGTERM),SURVIVED,,512,50,false,21187,/home/jinu/agent-leak-troubleshooting/logs/console_deadlock-after_20260927_132717.log
