@@ -63,7 +63,7 @@ VERDICT: HANG - PID 는 살아있으나 CPU 사용·로그 기록이 모두 정�
 2026-09-27 13:24:10,365 [INFO] [AgentWorker][Worker-Thread-2] WAITING for [Shared_Memory_A]... (Status: BLOCKED)
                                                   (이후 수동 종료 시까지 176초간 추가 기록 없음)
 ```
-- 캡처: [1-5 PID·스레드 정체](../docs/evidence/1-5a_deadlock_diagnose.webp), [1-5 마지막 로그·판정·관제](../docs/evidence/1-5b_deadlock_lastlog_monitor.webp)
+- 캡처: [PID·스레드 정체 캡처](../docs/evidence/05a-deadlock-diagnose.webp), [마지막 로그·판정·관제 캡처](../docs/evidence/05b-deadlock-last-log.webp)
 
 ## 3. Root Cause Analysis (원인 분석)
 **증거가 좁혀 가는 범위**
@@ -125,7 +125,7 @@ MULTI_THREAD_ENABLE=false MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 RUN_TIMEOUT=300 bas
 ```
 - **After**: 작업이 모두 완료됐다(`All tasks completed`). 이후 5분 동안 로그가 끊기지 않고 282줄 기록됐다. `HANG_SUSPECT`는 0회였다.
 - **Before의 `exit_code`가 `?`인 이유**: 이 실행 당시 `run_app.sh`에는 Ctrl+C로 중단하면 종료 코드를 기록하기 전에 출력 파이프라인이 끊기는 버그가 있었다. 이후 수정해 현재는 `143(SIGTERM)`이 기록된다. 판정 근거는 `STOPPED_BY_USER`(스스로 끝나지 못함)와 `last_keyword=BLOCKED`다.
-- 캡처: [1-6 Before/After](../docs/evidence/1-6_deadlock_before_after.webp)
+- 캡처: [Before/After 캡처](../docs/evidence/06-deadlock-before-after.webp)
 
 **근본 해결 제안**
 - `MULTI_THREAD_ENABLE=false`는 동시성을 포기하는 **임시 조치**다. 코드에서는 순환 대기 조건을 깨야 한다.

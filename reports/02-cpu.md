@@ -57,7 +57,7 @@ Tasks:   1 total,   0 running,   1 sleeping,   0 stopped,   0 zombie
 tag         survival_sec  exit_code     result  last_keyword  CPU_MAX_OCCUPY  pid
 cpu-before  30            143(SIGTERM)  EXITED  WATCHDOG      100             12401
 ```
-- 전체 캡처: [1-3 CPU 패턴](../docs/evidence/1-3_cpu_pattern.png)
+- 전체 캡처: [CPU 종료 패턴 캡처](../docs/evidence/03-cpu-watchdog.png)
 
 ## 3. Root Cause Analysis (원인 분석)
 - **특정 프로세스의 부하 상승**
@@ -107,7 +107,7 @@ CPU_MAX_OCCUPY=50 MEMORY_LIMIT=512 MULTI_THREAD_ENABLE=false RUN_TIMEOUT=300 bas
   - Before: Watchdog에 의한 종료(`last_keyword=WATCHDOG`)
   - After: 관찰 종료(`SURVIVED`)
   - `result`와 `last_keyword`로 구분한다.
-- 캡처: [1-4 Before/After](../docs/evidence/1-4_cpu_before_after.webp)
+- 캡처: [Before/After 캡처](../docs/evidence/04-cpu-before-after.webp)
 
 **근본 해결 제안**
 - 상한을 낮추는 것은 **임시 조치**다.

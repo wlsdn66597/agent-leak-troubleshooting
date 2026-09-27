@@ -33,7 +33,7 @@
 | CPU (%) | 2.0 | 1.5 | 1.5 | 1.5 | 1.5 | 1.5 | — |
 
 - 약 27초 동안 RSS가 42 → 267MB로 증가했다(**약 8.3MB/초, 일정한 기울기**). 반면 CPU는 0~2%로 변화가 없다.
-- 전체 캡처: [1-1 관제 로그](../docs/evidence/1-1a_oom_monitor.webp)
+- 전체 캡처: [관제 로그 캡처](../docs/evidence/01a-oom-monitor.webp)
 
 **② 프로그램 실행 로그**: 종료 직전과 직후 구간 (`logs/console_oom-before_20260927_130914.log`)
 ```text
@@ -46,7 +46,7 @@
 2026-09-27 13:09:47,281 [CRITICAL] [MemoryGuard] Self-terminating process 6768 to prevent system instability.
 >>> [SYSTEM] SELF-TERMINATED (Memory Limit Exceeded) <<<
 ```
-- 전체 캡처: [1-1 실행 로그](../docs/evidence/1-1b_oom_applog.webp)
+- 전체 캡처: [실행 로그 캡처](../docs/evidence/01b-oom-app-log.webp)
 
 **③ 종료 코드** (`logs/runs.csv`)
 ```text
@@ -94,7 +94,7 @@ MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=false RUN_TIMEOUT=300 bas
 - **결과**: 생존 시간이 33초에서 5분 이상으로 **9배 이상** 늘었다.
 - **After 동작**: 한도에 도달해도 종료 대신 캐시를 비우고 회복했다. 5분 동안 약 66초 주기로 **4회** 회복했다.
 - **After의 143**: 앱이 죽은 것이 아니라 `RUN_TIMEOUT=300`에서 관찰을 끝낸 것이다.
-- 캡처: [1-2 Before/After](../docs/evidence/1-2_oom_before_after.webp)
+- 캡처: [Before/After 캡처](../docs/evidence/02-oom-before-after.webp)
 
 **한계와 근본 해결 제안**
 - 이번 조치는 **임시 조치**다. After에서도 Heap이 25MB씩 계속 늘다가 한도에서 캐시를 비울 뿐, 누수 자체는 남아 있다.

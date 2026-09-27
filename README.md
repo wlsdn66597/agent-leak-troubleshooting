@@ -3,6 +3,8 @@
 제공된 `agent-leak-app`을 리눅스에서 실행하면서 세 가지 장애(Memory Leak → OOM, CPU Spike, Deadlock)를 재현합니다. 관제 데이터와 로그로 원인을 추론하고, 결과를 GitHub Issue 형식의 리포트 3건으로 정리합니다.
 모든 스크립트는 리눅스 표준 도구(`ps`, `top`, `pgrep`, `ss`, `df`, `/proc`, `awk`)만 사용합니다.
 
+> 📸 실제 WSL2 Ubuntu 실행 결과는 **[평가항목 1 실행 증빙 및 설명](docs/WSL_EXECUTION_EVIDENCE.md)**에서, 장애 리포트 3건은 **[reports/](reports)**에서 확인할 수 있습니다.
+
 ---
 
 ## 1. 디렉터리 구조
@@ -18,10 +20,10 @@
 │   ├── monitor.sh        # 관제: 프로세스 CPU / 시스템 CPU / RSS / 스레드 수 / 상태 / 로그 정체 시간
 │   └── diagnose_hang.sh  # "살아있지만 멈춘" 상태 진단: ps -ef → ps -L(T0/T1) → top -H → 마지막 로그 → 판정
 ├── docs/
-│   ├── EVIDENCE.md       # 평가 항목 1 실행 증거 페이지 (캡처 + 항목별 설명)
-│   └── evidence/         # 증거 캡처 이미지
+│   ├── WSL_EXECUTION_EVIDENCE.md  # 평가항목 1 실행 증빙 (캡처 + 항목별 설명)
+│   └── evidence/         # 증빙 캡처 이미지 (01a-… ~ 07-…)
 ├── reports/
-│   ├── 01-oom.md         # [Bug] OOM 이슈 리포트 (템플릿 → 실측값으로 채움)
+│   ├── 01-oom.md         # [Bug] OOM 이슈 리포트 (실측 로그 기반)
 │   ├── 02-cpu.md         # [Bug] CPU Spike 이슈 리포트
 │   └── 03-deadlock.md    # [Bug] Deadlock 이슈 리포트
 └── logs/                 # 실행 산출물 (2026-09-27 제출용 실행 로그 포함)
@@ -296,168 +298,122 @@ CPU는 스케줄러(CFS)가 실행 대기 중인 프로세스들에게 시간을
 
 ---
 
-## 5. 평가 항목 1 증거 (실행 명령 + 캡처 위치)
+## 5. 평가항목 1 — 수행 내역과 검증 명령
 
-> **실제 실행 결과(캡처 + 항목별 설명)는 [docs/EVIDENCE.md](docs/EVIDENCE.md)에 정리했습니다.** 이 장은 그 증거를 다시 만드는 방법을 설명합니다.
+> 📸 아래 명령을 실제로 실행한 캡처와 설명은 **[평가항목 1 실행 증빙 및 설명](docs/WSL_EXECUTION_EVIDENCE.md)**에 있습니다.
 
-**준비**: 3-3의 실험을 위에서부터 순서대로 한 번 진행하면 8개 증거가 모두 나옵니다(총 20분 안팎). 각 항목은 두 부분으로 되어 있습니다.
-- **실행**: 증거를 만드는 명령
-- **캡처**: 스크린샷에 반드시 보여야 할 부분
+모든 명령은 WSL 터미널에서 프로젝트 폴더(`cd ~/agent-leak-troubleshooting`)로 이동한 뒤 실행합니다. 터미널 1에서는 실험 내내 `bash scripts/monitor.sh 2`를 켜 둡니다. 결과는 `logs/`에 쌓이고, 아래 `grep` 명령으로 확인할 부분만 뽑아 봅니다.
 
-캡처는 `docs/evidence/`에 항목 번호로 저장하고, 아래 `![...]` 자리에 연결합니다.
+### 1. [OOM] 메모리 선형 증가 → 강제 종료
 
-> **팁**: Windows Terminal에서 `Alt+Shift+D`로 창을 나눠 monitor와 앱 출력을 한 화면에 두고 `Win+Shift+S`로 캡처하면, 한 장에 PID·타임스탬프·로그를 함께 담을 수 있습니다. 텍스트 발췌도 같이 붙여 두면 채점자가 읽기 쉽습니다.
+`MEMORY_LIMIT=256`으로 실행하면 `MemoryWorker`의 Heap이 약 3초마다 25MB씩 늘어납니다. 한도를 넘으면 `MemoryGuard`가 자기 프로세스를 SIGKILL로 종료합니다.
 
-### 1-1. [OOM] 메모리 선형 증가 → 강제 종료 패턴
-
-**실행**:
 ```bash
-bash scripts/monitor.sh 2                                                                               # 터미널 1
-MEMORY_LIMIT=256 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=false bash scripts/run_app.sh oom-before           # 터미널 2
+MEMORY_LIMIT=256 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=false bash scripts/run_app.sh oom-before
+grep -E "PID:|EXITED" logs/monitor_*.log | tail -n 18
+grep -E "MemoryWorker|MemoryGuard|SELF-TERMINATED" logs/console_oom-before_*.log | tail -n 8
 ```
 
-**캡처** (종료된 뒤 아래 명령 출력을 캡처):
-```bash
-grep -E "PID:|EXITED" logs/monitor_*.log | tail -n 18                                             # ① 관제 수치
-grep -nE "MemoryWorker|MemoryGuard|SELF-TERMINATED" logs/console_oom-before_*.log | tail -n 10    # ② 실행 로그
-```
-- ① `RSS:42MB → 67 → 92 → … → 267MB/LIMIT:256MB`로 **일정하게 증가**하는 줄들
-  - `STATUS:MEM_WARN`으로 바뀌는 지점
-  - 마지막 `PROCESS:agent-leak-app EXITED (PID:xxxx)`
-- ② `[MemoryWorker] Current Heap: 25MB → 50MB → …`가 3초 간격으로 증가하는 줄들
-  - `[CRITICAL] [MemoryGuard] Memory limit exceeded (275MB >= 256MB)`
-  - `Self-terminating process <PID>`
-  - `>>> [SYSTEM] SELF-TERMINATED (Memory Limit Exceeded) <<<`
+기대 핵심:
+- 관제 로그: RSS가 약 25MB씩 증가하고, `STATUS:MEM_WARN` 다음에 `EXITED (PID:x)`
+- 실행 로그: `Memory limit exceeded (275MB >= 256MB)`, `Self-terminating process <같은 PID>`, `SELF-TERMINATED (Memory Limit Exceeded)`
 
-![1-1 OOM 패턴](docs/evidence/1-1_oom_pattern.png)
+### 2. [OOM] MEMORY_LIMIT 조정 Before & After
 
-### 1-2. [OOM] MEMORY_LIMIT 조정 Before & After
-
-**실행**:
 ```bash
 MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 MULTI_THREAD_ENABLE=false RUN_TIMEOUT=300 bash scripts/run_app.sh oom-after
+grep -E "^tag|^oom" logs/runs.csv | cut -d, -f1,4-9 | column -s, -t
+grep -E "Resource Check|MEMORY \]|Reached Limit|Flushed|RECOVERED" logs/console_oom-after_*.log | head -n 8
 ```
 
-**캡처**:
+기대 핵심:
+- `oom-before`: `137(SIGKILL)`, `EXITED`, 수십 초
+- `oom-after`: `SURVIVED`, 300초 이상
+- After 로그: 한도에서 종료 대신 `MEMORY RECOVERED (Cache Cleared)`
+
+### 3. [CPU] CPU 사용률 임계치 초과 → 종료
+
+`CPU_MAX_OCCUPY`가 50보다 크면 `CpuWorker`의 부하가 50%를 넘는 순간 Watchdog가 SIGTERM으로 종료합니다. `top`은 실행 중(시작 후 10~20초)에 다른 터미널에서 찍습니다.
+
 ```bash
-grep -E "^tag|^oom" logs/runs.csv | cut -d, -f1,4-9 | column -s, -t                              # ① 비교표
-grep -nE "Reached Limit|Flushed|RECOVERED" logs/console_oom-after_*.log                          # ② After 로그
-```
-- ① `oom-before`: `survival_sec` 약 30~50초, `137(SIGKILL)`, `EXITED`, `SELF-TERMINATED`
-  - `oom-after`: `300`, `SURVIVED`
-  - 두 줄을 한 화면에 담습니다.
-- ② After에서는 한도에 도달해도 `Memory Usage Reached Limit (525MB). Starting cleanup...` → `MEMORY RECOVERED (Cache Cleared)`로 **종료 대신 회복**하는 줄
-
-![1-2 OOM Before/After](docs/evidence/1-2_oom_before_after.png)
-
-### 1-3. [CPU] CPU 사용률 임계치 초과 → 종료 패턴
-
-**실행**:
-```bash
-CPU_MAX_OCCUPY=100 MEMORY_LIMIT=512 MULTI_THREAD_ENABLE=false bash scripts/run_app.sh cpu-before             # 터미널 2
-top -b -n 1 -p "$(pgrep -n -x agent-leak-app)" | head -n 8                                                # 터미널 3, 실행 중(약 15초 시점)
+CPU_MAX_OCCUPY=100 MEMORY_LIMIT=512 MULTI_THREAD_ENABLE=false bash scripts/run_app.sh cpu-before
+top -b -n 1 -p "$(pgrep -n -x agent-leak-app)" | head -n 8
+grep -E "CPU    \]|CpuWorker|WATCHDOG" logs/console_cpu-before_*.log | tail -n 12
 ```
 
-**캡처**:
-```bash
-grep -nE "CpuWorker|WATCHDOG" logs/console_cpu-before_*.log | tail -n 12                         # ① 실행 로그
-grep -E "PID:|EXITED" logs/monitor_*.log | tail -n 12                                             # ② 관제
-```
-- ① `[CpuWorker] Current Load: 5.00% → 12% → … → 50.87%`로 오르는 줄들
-  - `[CRITICAL] [CpuWorker] CPU Threshold Violated!`
-  - `>>> [SYSTEM] WATCHDOG: INITIATING EMERGENCY ABORT (SIGTERM) <<<`
-- ② / top: 해당 **PID의 %CPU**와 `SYS_CPU`(시스템 전체)를 나란히 보여, 특정 프로세스의 문제임을 표시합니다.
-  - 3-2에서 설명했듯 앱이 보고하는 Load와 top 수치는 다르므로, 그 점도 캡션에 적습니다.
+기대 핵심:
+- 실행 로그: `Current Load` 계단식 상승 → `CPU Threshold Violated!` → `WATCHDOG: INITIATING EMERGENCY ABORT (SIGTERM)`
+- top: 해당 PID 한 줄과 시스템 전체 `%Cpu(s)`의 idle 값
 
-![1-3 CPU 패턴](docs/evidence/1-3_cpu_pattern.png)
+### 4. [CPU] CPU_MAX_OCCUPY 조정 Before & After
 
-### 1-4. [CPU] CPU_MAX_OCCUPY 조정 Before & After
-
-**실행**:
 ```bash
 CPU_MAX_OCCUPY=50 MEMORY_LIMIT=512 MULTI_THREAD_ENABLE=false RUN_TIMEOUT=300 bash scripts/run_app.sh cpu-after
+grep -E "^tag|^cpu" logs/runs.csv | cut -d, -f1,4-9 | column -s, -t
+grep -E "CPU    \]|Peak reached|Cooldown complete" logs/console_cpu-after_*.log | head -n 6
 ```
 
-**캡처**:
+기대 핵심:
+- `cpu-before`: `EXITED` / `WATCHDOG`
+- `cpu-after`: `SURVIVED`
+- After 로그: `Peak reached (50.00%)` ↔ `Cooldown complete (5.00%)` 반복
+
+### 5. [Deadlock] 살아있지만 멈춘 상태 식별
+
+`MULTI_THREAD_ENABLE=true`면 두 워커 스레드가 서로의 락을 기다리며 멈춥니다. `BLOCKED` 로그가 나온 뒤 앱을 끄지 말고 다른 터미널에서 진단합니다.
+
 ```bash
-grep -E "^tag|^cpu" logs/runs.csv | cut -d, -f1,4-9 | column -s, -t                              # ① 비교표
-grep -nE "Peak reached|Cooldown complete" logs/console_cpu-after_*.log | head -n 6               # ② After 로그
-```
-- ① `cpu-before`: 약 25초, `143(SIGTERM)`, `WATCHDOG`
-  - `cpu-after`: `300`, `SURVIVED`
-- ② `Peak reached (50.00%). Starting cooldown...` ↔ `Cooldown complete (5.00%)`가 반복되며, **한도에서 스스로 멈추는** 줄
-
-![1-4 CPU Before/After](docs/evidence/1-4_cpu_before_after.png)
-
-### 1-5. [Deadlock] PID는 살아있으나 CPU/메모리/로그가 멈춘 상태 식별
-
-**실행**:
-```bash
-MULTI_THREAD_ENABLE=true MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 bash scripts/run_app.sh deadlock-before           # 터미널 2
-# BLOCKED 로그가 나오고 30초 이상 멈춘 뒤, 터미널 2를 끄지 말고 터미널 3에서:
+MULTI_THREAD_ENABLE=true MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 bash scripts/run_app.sh deadlock-before
 ps -ef | grep [a]gent-leak-app
 bash scripts/diagnose_hang.sh 10
+grep HANG_SUSPECT "$(ls -t logs/monitor_*.log | head -1)" | tail -n 5
 ```
 
-**캡처**:
-- `ps -ef` 출력: 부모/자식 **PID 2개가 살아있는** 줄
-- `diagnose_hang.sh` 출력:
-  - 섹션 2·3: T0/T1 모두 스레드 3개가 `STAT=SNl+`, `WCHAN=futex_wait_queue`, `%CPU 0.0`, TIME 변화 없음
-  - 섹션 5: `CPU tick 변화:0  RSS 변화:0KB  마지막 로그 이후:NNs` + `VERDICT: HANG`
-- 관제: `grep HANG_SUSPECT logs/monitor_*.log | tail -n 5` → `CPU:0.0%`, RSS 고정, `LOG_IDLE`가 계속 증가
+기대 핵심:
+- `ps -ef`: PID가 살아 있음
+- `ps -L` T0/T1: 모든 스레드가 `S` 상태, `WCHAN=futex_wait_queue`, CPU tick·RSS 변화 0
+- 마지막 로그: `WAITING ... (Status: BLOCKED)`
+- 판정: `VERDICT: HANG`
+- 관제 로그: `STATUS:HANG_SUSPECT`
 
-![1-5 Deadlock 식별](docs/evidence/1-5_deadlock_hang.png)
+### 6. [Deadlock] MULTI_THREAD_ENABLE 조정 재현/회피
 
-### 1-6. [Deadlock] MULTI_THREAD_ENABLE 조정 재현/회피 비교
+진단이 끝나면 Before를 `Ctrl+C`로 종료하고 After를 실행합니다.
 
-**실행**: 1-5 진단 후 터미널 2에서 `Ctrl+C`로 종료한 다음 아래를 실행합니다.
 ```bash
 MULTI_THREAD_ENABLE=false MEMORY_LIMIT=512 CPU_MAX_OCCUPY=50 RUN_TIMEOUT=300 bash scripts/run_app.sh deadlock-after
+grep -E "THREAD \]|DEADLOCK|LOCK ACQUIRED|Need resource|BLOCKED" logs/console_deadlock-before_*.log
+grep -E "THREAD \]|OPTIMAL|All tasks completed" logs/console_deadlock-after_*.log
+grep -E "^tag|^deadlock" logs/runs.csv | cut -d, -f1,4-10 | column -s, -t
 ```
 
-**캡처**:
-```bash
-grep -nE "LOCK ACQUIRED|Need resource|BLOCKED" logs/console_deadlock-before_*.log                 # ① 재현
-grep -nE "Concurrency|OPTIMAL|All tasks completed" logs/console_deadlock-after_*.log              # ② 회피
-grep -E "^tag|^deadlock" logs/runs.csv | cut -d, -f1,4-10 | column -s, -t                        # ③ 비교표
-```
-- ① Before에서 두 스레드가 교차로 락을 잡는 과정
-  - `Worker-Thread-1 LOCK ACQUIRED: [Shared_Memory_A]`
-  - `Worker-Thread-2 LOCK ACQUIRED: [Socket_Pool_B]`
-  - `Need resource [...]`
-  - `WAITING for [...]... (Status: BLOCKED)` 2줄
-- ② After: `Concurrency: False [ OK ]`, `ALL CONFIGURATIONS OPTIMAL`, `[Scheduler] All tasks completed.`
-- ③ `deadlock-before`: `STOPPED_BY_USER` / `BLOCKED`, `deadlock-after`: `SURVIVED`
+기대 핵심:
+- Before: 두 스레드가 락을 교차로 획득한 뒤 서로 `BLOCKED`
+- After: `Concurrency: False [ OK ]` → `ALL CONFIGURATIONS OPTIMAL` → `All tasks completed`
+- runs.csv: `STOPPED_BY_USER` 대 `SURVIVED`
 
-![1-6 Deadlock Before/After](docs/evidence/1-6_deadlock_before_after.png)
+### 7. [Format] 리포트 구조
 
-### 1-7. [Format] 리포트 3건의 GitHub Issue 구조
-
-**작성**: [reports/01-oom.md](reports/01-oom.md), [reports/02-cpu.md](reports/02-cpu.md), [reports/03-deadlock.md](reports/03-deadlock.md)의 `<!-- -->` 자리를 위 캡처와 발췌로 채웁니다. GitHub에 올릴 때는 Issue 본문에 붙여 넣고 `bug` 라벨을 답니다.
-
-**캡처**:
 ```bash
 grep -n "^# \|^## " reports/*.md
 ```
-- 3개 파일 모두 `Description(현상) → Evidence & Logs(증거) → Root Cause Analysis(원인) → Workaround & Verification(조치)` 4개 섹션을 갖췄음을 보여 줍니다.
-- 실제 GitHub Issue를 만들었다면 Issue 목록 화면 캡처로 대신합니다.
 
-![1-7 리포트 구조](docs/evidence/1-7_report_format.png)
+기대 핵심: 3개 리포트 모두 `Description` → `Evidence & Logs` → `Root Cause Analysis` → `Workaround & Verification`의 4개 섹션
 
-### 1-8. [Evidence] PID · 타임스탬프 · 핵심 메시지 포함 여부
+### 8. [Evidence] 증거 요소
 
-별도 실행 없이, 1-1~1-6 캡처가 아래 3요소를 모두 담았는지 점검합니다. 같은 PID가 여러 출처에서 일치하면 증거의 신뢰도가 높아집니다.
+별도 실행은 없습니다. 1~6의 결과에 **PID**(관제·로그·`ps`에서 같은 번호), **타임스탬프**(수신 시각 + 앱 밀리초 시각), **핵심 로그 메시지**(`SELF-TERMINATED`, `WATCHDOG`, `BLOCKED`, `VERDICT: HANG`)가 모두 담겼는지 확인합니다.
 
-| 캡처 | PID | 타임스탬프 | 핵심 메시지 |
-|---|---|---|---|
-| 1-1 | monitor `PID:xxxx` = 앱 로그 `Self-terminating process xxxx` | `[YYYY-MM-DD HH:MM:SS]` | `Memory limit exceeded`, `SELF-TERMINATED` |
-| 1-2 | `runs.csv`의 `pid` | `start`, `end` | `SURVIVED` vs `EXITED` |
-| 1-3 | top / monitor `PID:xxxx` | 로그 타임스탬프 | `CPU Threshold Violated`, `WATCHDOG ... (SIGTERM)` |
-| 1-4 | `runs.csv`의 `pid` | `start`, `end` | `Peak reached`, `Cooldown complete` |
-| 1-5 | `ps -ef` / `diagnose` `PID:xxxx` | diagnose 섹션 헤더 시각, 마지막 로그 시각 | `WAITING ... BLOCKED`, `VERDICT: HANG` |
-| 1-6 | `runs.csv`의 `pid` | `start`, `end` | `BLOCKED` vs `OPTIMAL` |
+## 필수 증거 자료 체크리스트
 
-- 캡처에 잘려 보이지 않는 값은, 같은 명령 출력을 아래처럼 코드 블록으로 함께 붙입니다. 이렇게 하면 이미지가 흐려도 텍스트로 검증할 수 있습니다.
-  ```text
-  (로그 발췌 붙여넣기)
-  ```
+- [x] OOM: monitor.sh 메모리 상승 수치 (RSS 42 → 267MB)
+- [x] OOM: 종료 직전·직후 실행 로그 (`Memory limit exceeded`, `SELF-TERMINATED`)
+- [x] OOM: `MEMORY_LIMIT` 변경 전후 비교 (256 대 512, 2회 실행)
+- [x] CPU: CPU 사용률 급상승 구간 (실행 로그 Load 추이 + top)
+- [x] CPU: 종료 로그 (`WATCHDOG ... SIGTERM`)
+- [x] CPU: `CPU_MAX_OCCUPY` 변경 전후 비교 (100 대 50)
+- [x] Deadlock: PID 존재 증거 (`ps -ef`)
+- [x] Deadlock: CPU/MEM 변화 정체 증거 (`ps -L` T0/T1, `top -H`)
+- [x] Deadlock: 마지막 로그 지점 (`WAITING ... BLOCKED`)
+- [x] Deadlock: 스레드/락 대기 추론 근거 (`futex_wait_queue`, 순환 대기 표)
+- [x] GitHub Issue 형식 리포트 3건 ([reports/](reports))
